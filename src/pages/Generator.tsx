@@ -20,23 +20,35 @@ async function handleGenerate() {
   setLoading(true);
 
   try {
-    console.log("🚀 Starting generation process...");
+    console.log("🚀 Starting generation...");
 
     let imageUrl: string | null = null;
 
-    // === 1. העלאת התמונה ל-Supabase Storage (אם קיימת) ===
+    // === העלאת תמונה ===
     if (imageData) {
-      // ניסיון להשתמש ב-imageFile אם קיים, אחרת imageData
-      const fileToUpload = imageFile || imageData;
+      let fileToUpload: File | Blob | null = null;
+
+      if (imageFile instanceof File) {
+        fileToUpload = imageFile;
+      } else if (imageData instanceof File || imageData instanceof Blob) {
+        fileToUpload = imageData;
+      } else if (typeof imageData === "string" && imageData.startsWith("data:image")) {
+        // אם זה base64 – המר ל-Blob
+        const base64Response = await fetch(imageData);
+        fileToUpload = await base64Response.blob();
+      }
 
       if (fileToUpload) {
-        const fileExt = fileToUpload.name ? 
-          fileToUpload.name.split('.').pop()?.toLowerCase() || 'png' : 
-          'png';
+        // הגבלת גודל (מקסימום ~8MB)
+        if (fileToUpload.size > 8 * 1024 * 1024) {
+          toast.error("Image is too large. Please use image under 8MB.");
+          throw new Error("Image too large");
+        }
 
+        const fileExt = fileToUpload.name?.split('.').pop()?.toLowerCase() || 'png';
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-        console.log(`Uploading image: ${fileName}`);
+        console.log(`Uploading image: ${fileName} (${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB)`);
 
         const { error: uploadError } = await supabase.storage
           .from('project-images')
@@ -46,8 +58,8 @@ async function handleGenerate() {
           });
 
         if (uploadError) {
-          console.error("Image upload failed:", uploadError);
-          toast.error("Failed to upload image. Please try again.");
+          console.error("Upload error:", uploadError);
+          toast.error("Failed to upload image");
           throw uploadError;
         }
 
@@ -56,16 +68,16 @@ async function handleGenerate() {
           .getPublicUrl(fileName);
 
         imageUrl = urlData.publicUrl;
-        console.log("✅ Image uploaded successfully:", imageUrl);
+        console.log("✅ Image uploaded:", imageUrl);
       }
     }
 
-    // === 2. הכנת ה-prompt ===
+    // === הכנת prompt ===
     const advancedNotes = [
       extremelyViral && "Push for maximum virality with bold pattern interrupts.",
       strongCTA && "Include a strong, direct sales CTA.",
       retention && "Optimize structure heavily for retention curve.",
-      videoName && `User uploaded a reference video (${videoName}${videoDuration ? `, ${videoDuration}s` : ""}).`,
+      videoName && `Reference video: ${videoName}`,
       selectedTones.length && `Tone: ${selectedTones.join(", ")}`,
       audience && `Audience: ${audience}`,
       niche && `Niche: ${niche}`,
@@ -73,9 +85,7 @@ async function handleGenerate() {
 
     const enrichedIdea = `${idea}\n\nAdvanced instructions: ${advancedNotes}`;
 
-    // === 3. קריאה ל-Edge Function ===
-    console.log("Calling Edge Function with imageUrl:", !!imageUrl);
-
+    // === קריאה ל-Edge Function ===
     const { data, error } = await supabase.functions.invoke("generate", {
       body: {
         idea: enrichedIdea,
@@ -85,24 +95,14 @@ async function handleGenerate() {
       },
     });
 
-    if (error) {
-      console.error("Edge Function Error:", error);
-      toast.error(error.message || "Generation failed");
-      throw error;
-    }
+    if (error) throw error;
+    if (!data) throw new Error("No data returned from AI");
 
-    if (!data) {
-      throw new Error("No data returned from AI service");
-    }
-
-    console.log("✅ AI Response received successfully");
-
-    // חישוב ציון ויראלי
     const viralScore = Math.round(
       ((data.viralityScore ?? 70) + (data.executionScore ?? 70) + (data.moneyScore ?? 70)) / 3
     ) || 75;
 
-    // === 4. שמירה למסד הנתונים ===
+    // שמירה ב-DB
     const { data: saved, error: saveErr } = await supabase
       .from("projects")
       .insert({
@@ -114,24 +114,21 @@ async function handleGenerate() {
         video_length: length,
         goal,
         tones: selectedTones,
-        image_url: imageUrl || null,
+        image_url: imageUrl,
         result: data,
         viral_score: viralScore,
       })
       .select()
       .single();
 
-    if (saveErr) {
-      console.error("Database save error:", saveErr);
-      throw saveErr;
-    }
+    if (saveErr) throw saveErr;
 
     toast.success("🔥 Strategy generated successfully!");
     navigate(`/projects/${saved.id}`);
 
   } catch (err: any) {
-    console.error("❌ handleGenerate Error:", err);
-    toast.error(err.message || "Generation failed — please try again");
+    console.error("❌ handleGenerate failed:", err);
+    toast.error(err.message || "Generation failed. Please try again.");
   } finally {
     setLoading(false);
   }

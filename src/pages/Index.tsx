@@ -221,6 +221,21 @@ const Index = () => {
               </div>
             </div>
 
+            {/* TikTok User Acquisition Engine */}
+            <div>
+              <SectionTitle icon={Megaphone}>TikTok User Acquisition Engine</SectionTitle>
+              <div className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
+                <ResultCard icon={Film} title="Viral Video Concept (for creator)" content={results.acquisitionVideoConcept} accent="purple" delay={80} />
+                <ResultCard icon={Zap} title="Hook for Viral Growth" content={results.acquisitionHook} accent="green" delay={160} />
+                <ResultCard icon={Magnet} title="Problem → Tool Angle" content={results.problemToToolAngle} accent="purple" delay={240} />
+                <ResultCard icon={Film} title="Copy-This Video Script" content={results.acquisitionScript} accent="green" delay={320} />
+                <ResultCard icon={Users} title="Viral Post Idea (indirect promo)" content={results.viralPostIdea} accent="purple" delay={400} />
+                <ResultCard icon={ArrowRight} title="CTA Loop" content={results.acquisitionCtaLoop} accent="green" delay={480} />
+                <ResultCard icon={Eye} title="Viral Seed (curiosity trigger)" content={results.viralSeed} accent="purple" delay={560} />
+                <ResultCard icon={Hash} title="Acquisition Hashtags" content={results.acquisitionHashtags.join(" ")} accent="green" delay={640} />
+              </div>
+            </div>
+
             {/* Caption + Hashtags */}
             {showViews && (
               <div>

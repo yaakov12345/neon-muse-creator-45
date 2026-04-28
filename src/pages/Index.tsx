@@ -5,24 +5,28 @@ import {
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
   Megaphone, Magnet, Eye, Zap, Users,
 } from "lucide-react";
-import { TopBar, type Mode } from "@/components/TopBar";
+import { TopBar, type Mode, type VideoLength } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguageSystem } from "@/hooks/useLanguageSystem";
 
-interface ScriptStep { visual: string; spoken: string; }
+interface ScriptStep { time: string; visual: string; spoken: string; }
+interface TopHook { text: string; isStrongest: boolean; }
 interface Results {
   viralityScore: number; viralityReason: string;
   moneyScore: number; moneyReason: string;
   subscriptionScore: number; subscriptionReason: string;
   executionScore: number; executionReason: string;
+  topHooks: TopHook[];
   hook: string;
   scriptSteps: ScriptStep[];
   retentionStructure: string;
+  engagementBoosters: string[];
   commentBait: string;
   viralLoopTip: string;
   distributionPlan: string;
+  distributionTips: string;
   monetizationModel: string;
   monetizationPlan: string;
   whyPeoplePay: string;
@@ -77,6 +81,7 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
+  const [videoLength, setVideoLength] = useState<VideoLength>("30s");
   const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,7 +94,7 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase() },
+        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase(), videoLength },
       });
 
       if (error) {
@@ -116,11 +121,11 @@ const Index = () => {
   const showMoney = mode === "money" || mode === "both";
 
   const scriptText = (steps: ScriptStep[]) =>
-    steps.map((s, i) => `${i + 1}. 🎬 ${s.visual}\n   🗣 ${s.spoken}`).join("\n\n");
+    steps.map((s) => `⏱ ${s.time}\n🗣 ${s.spoken}\n🎬 ${s.visual}`).join("\n\n");
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} />
+      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} videoLength={videoLength} onVideoLengthChange={setVideoLength} />
 
       <main className="flex-1 px-4 sm:px-6 pb-24">
         <section className="max-w-3xl mx-auto pt-12 sm:pt-20 text-center">

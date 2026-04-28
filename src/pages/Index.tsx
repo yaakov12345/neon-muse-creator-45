@@ -3,6 +3,7 @@ import {
   Flame, Film, DollarSign, Hash, Loader2, ArrowRight,
   Layers, CalendarDays, Lightbulb, Sparkles,
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
+  Megaphone, Magnet, Eye, Zap, Users,
 } from "lucide-react";
 import { TopBar, type Mode } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
@@ -32,6 +33,14 @@ interface Results {
   improvementTip: string;
   returnHook: string;
   seriesSystem: string;
+  acquisitionVideoConcept: string;
+  acquisitionHook: string;
+  problemToToolAngle: string;
+  acquisitionScript: string;
+  viralPostIdea: string;
+  acquisitionCtaLoop: string;
+  viralSeed: string;
+  acquisitionHashtags: string[];
   caption: string;
   hashtags: string[];
 }

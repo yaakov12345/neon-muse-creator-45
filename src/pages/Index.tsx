@@ -9,6 +9,7 @@ import { TopBar, type Mode } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguageSystem } from "@/hooks/useLanguageSystem";
 
 interface ScriptStep { visual: string; spoken: string; }
 interface Results {

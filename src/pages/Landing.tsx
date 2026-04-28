@@ -37,21 +37,30 @@ const featureIcons = [Zap, Play, Mic, TrendingUp, Sparkles, ArrowRight];
 export default function Landing() {
   const { user } = useAuth();
   const { language, changeLanguage, isRTL, allLanguages } = useLanguageSystem();
+
+  const currentLang = translations[language as keyof typeof translations] ?? translations.en;
   const ctaTo = user ? "/generator" : "/auth";
-  const t = translations[language] ?? translations.en;
+
+  const currentLanguageMeta = allLanguages.find((l) => l.code === language);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
-      {/* Language */}
+      
+      {/* Language selector */}
       <div className="flex justify-end px-4 pt-4">
         <div className="relative group">
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs">
             <Globe className="h-3 w-3" />
-            {allLanguages.find((l) => l.code === language)?.flag}
+            {currentLanguageMeta?.flag} {currentLanguageMeta?.nativeLabel}
           </button>
-          <div className="absolute end-0 mt-1 w-40 rounded-xl border bg-card shadow-lg opacity-0 group-hover:opacity-100 transition-all">
+
+          <div className="absolute end-0 mt-1 w-44 rounded-xl border bg-card shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
             {allLanguages.map((l) => (
-              <button key={l.code} onClick={() => changeLanguage(l.code)} className="block w-full text-left px-3 py-2 text-xs hover:bg-muted">
+              <button
+                key={l.code}
+                onClick={() => changeLanguage(l.code)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted"
+              >
                 {l.flag} {l.nativeLabel}
               </button>
             ))}
@@ -63,36 +72,39 @@ export default function Landing() {
       <section className="text-center px-4 pt-16 pb-24">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs mb-6">
           <Sparkles className="h-3 w-3" />
-          {t.badge}
+          {currentLang.badge}
         </div>
 
         <h1 className="text-5xl font-bold mb-4">
-          {t.h1a} <span className="text-primary">{t.h1b}</span> {t.h1c}
+          {currentLang.h1a} <span className="text-primary">{currentLang.h1b}</span> {currentLang.h1c}
         </h1>
 
         <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-          {t.subtitle}
+          {currentLang.subtitle}
         </p>
 
         <div className="flex justify-center gap-3">
           <Button asChild>
-            <Link to={ctaTo}>{t.cta}</Link>
+            <Link to={ctaTo}>
+              {currentLang.cta} <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
           </Button>
+
           <Button asChild variant="outline">
-            <Link to="/pricing">{t.pricingBtn}</Link>
+            <Link to="/pricing">{currentLang.pricingBtn}</Link>
           </Button>
         </div>
 
-        <p className="text-xs mt-3">{t.ctaSub}</p>
+        <p className="text-xs mt-3">{currentLang.ctaSub}</p>
 
         <div className="mt-6 flex justify-center gap-4 text-xs">
           <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-3 w-3 fill-yellow-400" />
             ))}
-            {t.social1}
+            {currentLang.social1}
           </div>
-          <span>{t.social2}</span>
+          <span>{currentLang.social2}</span>
         </div>
       </section>
 
@@ -100,12 +112,12 @@ export default function Landing() {
       <section className="px-4 pb-24">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-6">
-            {t.featuresTitle}
+            {currentLang.featuresTitle}
           </h2>
 
           <div className="grid md:grid-cols-3 gap-4">
-            {t.features.map((f, i) => {
-              const Icon = featureIcons[i];
+            {currentLang.features.map((f, i) => {
+              const Icon = featureIcons[i] ?? Sparkles;
               return (
                 <Card key={f.title} className="p-6">
                   <Icon className="mb-3" />
@@ -121,13 +133,13 @@ export default function Landing() {
       {/* CTA */}
       <section className="text-center pb-24">
         <h2 className="text-2xl font-bold mb-2">
-          {t.ctaCardTitle}
+          {currentLang.ctaCardTitle}
         </h2>
         <p className="text-muted-foreground mb-4">
-          {t.ctaCardSub}
+          {currentLang.ctaCardSub}
         </p>
         <Button asChild>
-          <Link to={ctaTo}>{t.cta}</Link>
+          <Link to={ctaTo}>{currentLang.cta}</Link>
         </Button>
       </section>
     </div>

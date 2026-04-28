@@ -22,31 +22,38 @@ serve(async (req) => {
 
     const focus =
       mode === "views"
-        ? "Bias every score, hook, and plan toward maximum reach, retention, and virality."
+        ? "Bias outputs toward maximum TikTok reach, retention, and viral loops."
         : mode === "money"
-        ? "Bias every score, hook, and plan toward revenue, conversion, and monetization."
-        : "Balance virality and monetization equally.";
+        ? "Bias outputs toward subscription revenue, conversion, and SaaS value."
+        : "Balance TikTok virality and subscription monetization equally.";
 
     const languageRule =
       language && language !== "AUTO"
-        ? `Respond ONLY in this language code: ${language}.`
-        : `Detect the language of the user's idea automatically (Hebrew, English, Spanish, Arabic, French, etc.) and respond ONLY in that language. Keep tone natural, simple, human.`;
+        ? `Respond ONLY in this language code: ${language}. No mixing languages.`
+        : `Detect the language of the user's idea automatically (Hebrew, English, Spanish, Arabic, French, etc.) and respond ONLY in that language across ALL fields. No mixing. Adapt tone and cultural style.`;
 
-    const systemPrompt = `You are an elite AI system combining: viral content strategist, performance marketing expert, monetization engine, behavioral psychology expert, and daily content growth system.
+    const systemPrompt = `You are an elite AI system combining: TikTok Viral Growth Engineer, SaaS Monetization Architect, Subscription Conversion Expert, Behavioral Psychology & Habit Engine, and Creator Growth System.
 
 🌍 LANGUAGE: ${languageRule}
 
-🎯 GOAL: Turn any idea into (1) viral short-form content, (2) monetization strategy, (3) daily content growth system.
+🎯 GOAL: Turn ANY idea into (1) viral TikTok content strategy, (2) monetization plan, (3) subscription SaaS value, (4) daily creator growth loop.
 
 ${focus}
 
+📱 TIKTOK VIRAL ENGINE — must include scroll-stopping 3s hook, retention structure, comment bait, daily TikTok idea, viral loop tip.
+💰 SAAS + SUBSCRIPTION ENGINE — must include monetization model (freemium/subscription/toolkit/automation), psychological reason people pay, premium-only feature, monthly price suggestion.
+🔁 DAILY GROWTH LOOP — daily challenge, streak motivation, next-level improvement.
+🚀 GROWTH LOOP SYSTEM — viral distribution plan, user return hook, content series system (5–10 videos).
+
 ⚠️ RULES:
 - No fluff, no long explanations.
-- Must work for ANY niche.
-- Feel like a professional growth tool.
-- Encourage daily usage.
-- Scores are integers 1-10.
-- Video script: 3-5 steps, each step has a visual + spoken line.
+- Works for ANY niche.
+- Optimized for TikTok virality.
+- Includes SaaS + subscription thinking.
+- Creates daily return behavior.
+- Feels like a real $20/month product.
+- All scores are integers 1–10.
+- Video script: 3–5 steps, each with visual + spoken line.
 - Hashtags: exactly 5 global hashtags (with #).
 - Caption: short, natural, engaging.
 
@@ -62,24 +69,27 @@ You MUST call the viral_strategy function with all required fields.`;
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Idea / product: ${idea}\n\nGenerate the full elite viral growth strategy.` },
+          { role: "user", content: `Idea / product: ${idea}\n\nGenerate the full elite TikTok + SaaS viral growth strategy.` },
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "viral_strategy",
-              description: "Return an elite viral growth strategy with scores, hook, script, monetization, series, daily idea, improvement tip, caption, and hashtags.",
+              description: "Return an elite TikTok + SaaS viral growth strategy.",
               parameters: {
                 type: "object",
                 properties: {
                   viralityScore: { type: "integer", minimum: 1, maximum: 10 },
-                  viralityReason: { type: "string", description: "Short reason for the virality score." },
+                  viralityReason: { type: "string" },
                   moneyScore: { type: "integer", minimum: 1, maximum: 10 },
-                  moneyReason: { type: "string", description: "Short reason for the money score." },
+                  moneyReason: { type: "string" },
+                  subscriptionScore: { type: "integer", minimum: 1, maximum: 10 },
+                  subscriptionReason: { type: "string" },
                   executionScore: { type: "integer", minimum: 1, maximum: 10 },
-                  executionReason: { type: "string", description: "Short reason for the execution score." },
-                  hook: { type: "string", description: "ONE strong scroll-stopping sentence." },
+                  executionReason: { type: "string" },
+
+                  hook: { type: "string", description: "TikTok viral hook — first 3s, scroll-stopping." },
                   scriptSteps: {
                     type: "array",
                     minItems: 3,
@@ -87,36 +97,52 @@ You MUST call the viral_strategy function with all required fields.`;
                     items: {
                       type: "object",
                       properties: {
-                        visual: { type: "string", description: "What is shown on screen." },
-                        spoken: { type: "string", description: "What is said / on-screen text." },
+                        visual: { type: "string" },
+                        spoken: { type: "string" },
                       },
                       required: ["visual", "spoken"],
                       additionalProperties: false,
                     },
                   },
-                  monetizationMethod: {
+
+                  retentionStructure: { type: "string", description: "How to keep viewers watching till the end." },
+                  commentBait: { type: "string", description: "One line that triggers comments." },
+                  viralLoopTip: { type: "string", description: "How this video becomes a self-feeding series." },
+                  distributionPlan: { type: "string", description: "How this idea spreads on TikTok organically." },
+
+                  monetizationModel: {
                     type: "string",
-                    enum: ["affiliate", "product", "service", "lead generation"],
+                    enum: ["freemium", "subscription", "creator toolkit", "automation tool"],
                   },
-                  monetizationPlan: { type: "string", description: "Short, concrete explanation of the monetization method." },
-                  seriesStrategy: { type: "string", description: "How to turn this into a 5-10 video series." },
-                  dailyIdea: { type: "string", description: "One new related idea the user can post tomorrow." },
-                  improvementTip: { type: "string", description: "One simple optimization tip for next time." },
-                  caption: { type: "string", description: "Short, natural, engaging caption." },
+                  monetizationPlan: { type: "string", description: "Concrete monetization explanation." },
+                  whyPeoplePay: { type: "string", description: "Psychological reason: save time / make money / go viral / avoid effort." },
+                  premiumFeature: { type: "string", description: "One feature only paid users get." },
+                  pricingSuggestion: { type: "string", description: "Simple monthly price suggestion, e.g. $9/mo." },
+
+                  dailyIdea: { type: "string", description: "Ready-to-post TikTok idea for tomorrow." },
+                  dailyChallenge: { type: "string", description: "One small action user must do today." },
+                  streakMotivation: { type: "string", description: "Short motivational sentence to keep users returning." },
+                  improvementTip: { type: "string", description: "One tip to improve results tomorrow." },
+                  returnHook: { type: "string", description: "Why the user comes back tomorrow." },
+                  seriesSystem: { type: "string", description: "How to turn this into 5–10 videos automatically." },
+
+                  caption: { type: "string" },
                   hashtags: {
                     type: "array",
                     minItems: 5,
                     maxItems: 5,
-                    items: { type: "string", description: "Global hashtag starting with #." },
+                    items: { type: "string" },
                   },
                 },
                 required: [
                   "viralityScore", "viralityReason",
                   "moneyScore", "moneyReason",
+                  "subscriptionScore", "subscriptionReason",
                   "executionScore", "executionReason",
                   "hook", "scriptSteps",
-                  "monetizationMethod", "monetizationPlan",
-                  "seriesStrategy", "dailyIdea", "improvementTip",
+                  "retentionStructure", "commentBait", "viralLoopTip", "distributionPlan",
+                  "monetizationModel", "monetizationPlan", "whyPeoplePay", "premiumFeature", "pricingSuggestion",
+                  "dailyIdea", "dailyChallenge", "streakMotivation", "improvementTip", "returnHook", "seriesSystem",
                   "caption", "hashtags",
                 ],
                 additionalProperties: false,

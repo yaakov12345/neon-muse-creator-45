@@ -185,12 +185,24 @@ const Index = () => {
               <div>
                 <SectionTitle icon={FlameIcon}>TikTok Viral Engine</SectionTitle>
                 <div className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
-                  <ResultCard icon={Flame} title="Viral Hook (first 3s)" content={results.hook} accent="purple" delay={80} />
-                  <ResultCard icon={Film} title="TikTok Video Script" content={scriptText(results.scriptSteps)} accent="purple" delay={160} />
-                  <ResultCard icon={TrendingUp} title="Retention Structure" content={results.retentionStructure} accent="green" delay={240} />
-                  <ResultCard icon={MessageCircle} title="Comment Bait" content={results.commentBait} accent="green" delay={320} />
-                  <ResultCard icon={Repeat} title="Viral Loop Tip" content={results.viralLoopTip} accent="purple" delay={400} />
-                  <ResultCard icon={Rocket} title="Distribution Plan" content={results.distributionPlan} accent="green" delay={480} />
+                  <ResultCard
+                    icon={Flame}
+                    title="Top 5 Viral Hooks"
+                    content={results.topHooks.map((h, i) => `${h.isStrongest ? "🔥 " : `${i + 1}. `}${h.text}`).join("\n\n")}
+                    accent="purple"
+                    delay={80}
+                  />
+                  <ResultCard icon={Film} title={`Full Video Script (${videoLength})`} content={scriptText(results.scriptSteps)} accent="purple" delay={160} />
+                  <ResultCard icon={TrendingUp} title="Retention & Viral Loop" content={`${results.retentionStructure}\n\n${results.viralLoopTip}`} accent="green" delay={240} />
+                  <ResultCard
+                    icon={MessageCircle}
+                    title="Engagement Boosters"
+                    content={`${results.engagementBoosters.map((b, i) => `${i + 1}. ${b}`).join("\n")}\n\n💬 ${results.commentBait}`}
+                    accent="green"
+                    delay={320}
+                  />
+                  <ResultCard icon={Rocket} title="Distribution Plan" content={results.distributionPlan} accent="purple" delay={400} />
+                  <ResultCard icon={TrendingUp} title="Optimization Tips" content={results.distributionTips} accent="green" delay={480} />
                 </div>
               </div>
             )}

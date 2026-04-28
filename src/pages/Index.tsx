@@ -5,24 +5,28 @@ import {
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
   Megaphone, Magnet, Eye, Zap, Users,
 } from "lucide-react";
-import { TopBar, type Mode } from "@/components/TopBar";
+import { TopBar, type Mode, type VideoLength } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguageSystem } from "@/hooks/useLanguageSystem";
 
-interface ScriptStep { visual: string; spoken: string; }
+interface ScriptStep { time: string; visual: string; spoken: string; }
+interface TopHook { text: string; isStrongest: boolean; }
 interface Results {
   viralityScore: number; viralityReason: string;
   moneyScore: number; moneyReason: string;
   subscriptionScore: number; subscriptionReason: string;
   executionScore: number; executionReason: string;
+  topHooks: TopHook[];
   hook: string;
   scriptSteps: ScriptStep[];
   retentionStructure: string;
+  engagementBoosters: string[];
   commentBait: string;
   viralLoopTip: string;
   distributionPlan: string;
+  distributionTips: string;
   monetizationModel: string;
   monetizationPlan: string;
   whyPeoplePay: string;
@@ -77,6 +81,7 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
+  const [videoLength, setVideoLength] = useState<VideoLength>("30s");
   const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,7 +94,7 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase() },
+        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase(), videoLength },
       });
 
       if (error) {
@@ -116,11 +121,11 @@ const Index = () => {
   const showMoney = mode === "money" || mode === "both";
 
   const scriptText = (steps: ScriptStep[]) =>
-    steps.map((s, i) => `${i + 1}. 🎬 ${s.visual}\n   🗣 ${s.spoken}`).join("\n\n");
+    steps.map((s) => `⏱ ${s.time}\n🗣 ${s.spoken}\n🎬 ${s.visual}`).join("\n\n");
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} />
+      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} videoLength={videoLength} onVideoLengthChange={setVideoLength} />
 
       <main className="flex-1 px-4 sm:px-6 pb-24">
         <section className="max-w-3xl mx-auto pt-12 sm:pt-20 text-center">
@@ -180,12 +185,24 @@ const Index = () => {
               <div>
                 <SectionTitle icon={FlameIcon}>TikTok Viral Engine</SectionTitle>
                 <div className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
-                  <ResultCard icon={Flame} title="Viral Hook (first 3s)" content={results.hook} accent="purple" delay={80} />
-                  <ResultCard icon={Film} title="TikTok Video Script" content={scriptText(results.scriptSteps)} accent="purple" delay={160} />
-                  <ResultCard icon={TrendingUp} title="Retention Structure" content={results.retentionStructure} accent="green" delay={240} />
-                  <ResultCard icon={MessageCircle} title="Comment Bait" content={results.commentBait} accent="green" delay={320} />
-                  <ResultCard icon={Repeat} title="Viral Loop Tip" content={results.viralLoopTip} accent="purple" delay={400} />
-                  <ResultCard icon={Rocket} title="Distribution Plan" content={results.distributionPlan} accent="green" delay={480} />
+                  <ResultCard
+                    icon={Flame}
+                    title="Top 5 Viral Hooks"
+                    content={results.topHooks.map((h, i) => `${h.isStrongest ? "🔥 " : `${i + 1}. `}${h.text}`).join("\n\n")}
+                    accent="purple"
+                    delay={80}
+                  />
+                  <ResultCard icon={Film} title={`Full Video Script (${videoLength})`} content={scriptText(results.scriptSteps)} accent="purple" delay={160} />
+                  <ResultCard icon={TrendingUp} title="Retention & Viral Loop" content={`${results.retentionStructure}\n\n${results.viralLoopTip}`} accent="green" delay={240} />
+                  <ResultCard
+                    icon={MessageCircle}
+                    title="Engagement Boosters"
+                    content={`${results.engagementBoosters.map((b, i) => `${i + 1}. ${b}`).join("\n")}\n\n💬 ${results.commentBait}`}
+                    accent="green"
+                    delay={320}
+                  />
+                  <ResultCard icon={Rocket} title="Distribution Plan" content={results.distributionPlan} accent="purple" delay={400} />
+                  <ResultCard icon={TrendingUp} title="Optimization Tips" content={results.distributionTips} accent="green" delay={480} />
                 </div>
               </div>
             )}

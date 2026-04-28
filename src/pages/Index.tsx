@@ -9,6 +9,7 @@ import { TopBar, type Mode } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguageSystem } from "@/hooks/useLanguageSystem";
 
 interface ScriptStep { visual: string; spoken: string; }
 interface Results {
@@ -76,7 +77,7 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
-  const [language, setLanguage] = useState("AUTO");
+  const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
@@ -88,7 +89,7 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language },
+        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase() },
       });
 
       if (error) {
@@ -119,7 +120,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={setLanguage} />
+      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} />
 
       <main className="flex-1 px-4 sm:px-6 pb-24">
         <section className="max-w-3xl mx-auto pt-12 sm:pt-20 text-center">

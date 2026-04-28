@@ -89,7 +89,7 @@ const Index = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language },
+        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase() },
       });
 
       if (error) {

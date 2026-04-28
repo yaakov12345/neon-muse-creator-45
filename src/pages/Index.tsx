@@ -246,13 +246,63 @@ const Index = () => {
               />
               <button
                 onClick={handleGenerate}
-                disabled={loading || !idea.trim()}
+                disabled={loading || (!idea.trim() && !imageData)}
                 className="group relative inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-primary text-background font-semibold text-sm sm:text-base transition-smooth hover:scale-[1.02] hover:animate-pulse-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap"
               >
                 {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />{t.ctaLoading}</>) :
                   (<>{isRTL ? "←" : "→"} {t.cta}</>)}
               </button>
             </div>
+          </div>
+
+          {/* Image upload */}
+          <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "270ms" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleImagePick(e.target.files?.[0] ?? null)}
+            />
+            {!imageData ? (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-2xl border border-dashed border-border/70 bg-muted/20 hover:bg-muted/40 hover:border-primary/60 transition-all px-4 py-5 flex items-center gap-4 text-start"
+              >
+                <div className="h-11 w-11 shrink-0 rounded-xl bg-gradient-primary/20 flex items-center justify-center">
+                  <ImagePlus className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-semibold text-sm">{t.imageTitle}</div>
+                  <div className="text-[12px] text-muted-foreground mt-0.5 leading-snug">{t.imageDesc}</div>
+                </div>
+                <div className="ms-auto hidden sm:inline-flex px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-medium">
+                  {t.imagePick}
+                </div>
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 flex items-center gap-3">
+                <img src={imageData} alt={imageName} className="h-16 w-16 rounded-xl object-cover border border-border/50" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{imageName}</div>
+                  <div className="text-[11px] text-muted-foreground">{t.imageDesc}</div>
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-full bg-muted/60 hover:bg-muted text-xs font-medium"
+                >
+                  {t.imageReplace}
+                </button>
+                <button
+                  onClick={() => { setImageData(null); setImageName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-muted/60 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                  aria-label={t.imageRemove}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Video length picker */}

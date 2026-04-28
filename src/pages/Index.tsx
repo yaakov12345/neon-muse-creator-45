@@ -77,7 +77,7 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
-  const [language, setLanguage] = useState("AUTO");
+  const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);

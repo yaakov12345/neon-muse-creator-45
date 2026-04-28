@@ -82,10 +82,62 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
   const [videoLength, setVideoLength] = useState<VideoLength>("30s");
-  const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
+  const { language, resolvedLanguage, changeLanguage, isRTL } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
+
+  const t = isRTL
+    ? {
+        badge: "מנוע ויראלי + צמיחת SaaS לטיקטוק",
+        title1: "הפוך כל רעיון",
+        title2: "לוויראלי",
+        subtitle: "Hooks חזקים • סקריפטים מנצחים • מונטיזציה • Retention\nמותאם אישית לאורך הסרטון שלך",
+        placeholder: "הזן רעיון או מוצר כאן... (למשל: שולחן עץ כפרי, מכונת קפה אוטומטית, אוזניות אלחוטיות)",
+        cta: "צור אסטרטגיה ויראלית",
+        ctaLoading: "יוצר...",
+        lengthLabel: "אורך סרטון",
+        modeLabel: "מצב",
+        examplesLabel: "דוגמאות מהירות",
+        examples: ["שולחן עץ כפרי", "מכונת קפה אוטומטית", "אוזניות אלחוטיות", "קרם פנים טבעי", "מנורת LED חכמה"],
+        lengths: [
+          { id: "10s" as VideoLength, label: "10 שניות", desc: "Ultra Short" },
+          { id: "15s" as VideoLength, label: "15-20 שניות", desc: "Short (מומלץ)", recommended: true },
+          { id: "30s" as VideoLength, label: "30-45 שניות", desc: "Medium" },
+          { id: "60s" as VideoLength, label: "60 שניות", desc: "Long" },
+        ],
+        modes: [
+          { id: "both" as Mode, label: "Both", desc: "צפיות + כסף" },
+          { id: "money" as Mode, label: "Money", desc: "הכנסה" },
+          { id: "views" as Mode, label: "Views", desc: "צפיות" },
+        ],
+        optimized: (m: Mode) => `מותאם ל${m === "views" ? "טווח הגעה ושימור" : m === "money" ? "הכנסה ומנוי" : "צמיחה + הכנסה"}`,
+      }
+    : {
+        badge: "TikTok viral + SaaS growth engine",
+        title1: "Turn any idea into a",
+        title2: "viral growth system",
+        subtitle: "Strong hooks • Winning scripts • Monetization • Retention\nTailored to your video length",
+        placeholder: "Enter an idea or product here... (e.g. rustic wood table, automatic coffee machine, wireless earbuds)",
+        cta: "Generate Viral Strategy",
+        ctaLoading: "Generating...",
+        lengthLabel: "Video length",
+        modeLabel: "Mode",
+        examplesLabel: "Quick examples",
+        examples: ["Rustic wood table", "Automatic coffee machine", "Wireless earbuds", "Natural face cream", "Smart LED lamp"],
+        lengths: [
+          { id: "10s" as VideoLength, label: "10s", desc: "Ultra Short" },
+          { id: "15s" as VideoLength, label: "15-20s", desc: "Short (recommended)", recommended: true },
+          { id: "30s" as VideoLength, label: "30-45s", desc: "Medium" },
+          { id: "60s" as VideoLength, label: "60s", desc: "Long" },
+        ],
+        modes: [
+          { id: "both" as Mode, label: "Both", desc: "Views + Money" },
+          { id: "money" as Mode, label: "Money", desc: "Revenue" },
+          { id: "views" as Mode, label: "Views", desc: "Reach" },
+        ],
+        optimized: (m: Mode) => `Optimized for ${m === "views" ? "reach & retention" : m === "money" ? "revenue & subscription" : "growth + revenue"}`,
+      };
 
   const handleGenerate = async () => {
     if (!idea.trim() || loading) return;
@@ -131,16 +183,16 @@ const Index = () => {
         <section className="max-w-3xl mx-auto pt-12 sm:pt-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border/60 bg-muted/40 text-xs text-muted-foreground mb-6 animate-fade-in-up">
             <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-            TikTok viral + SaaS growth engine
+            {t.badge}
           </div>
 
           <h1 className="font-display font-bold text-4xl sm:text-6xl tracking-tight leading-[1.05] mb-5 animate-fade-in-up" style={{ animationDelay: "80ms" }}>
-            Turn any idea into a{" "}
-            <span className="text-gradient">viral growth system</span>.
+            {t.title1}{" "}
+            <span className="text-gradient">{t.title2}</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-10 animate-fade-in-up" style={{ animationDelay: "160ms" }}>
-            TikTok hooks, scripts, monetization, subscription value — engineered for creators who post every day.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-10 animate-fade-in-up whitespace-pre-line" style={{ animationDelay: "160ms" }}>
+            {t.subtitle}
           </p>
 
           <div className="relative animate-fade-in-up" style={{ animationDelay: "240ms" }}>
@@ -151,7 +203,8 @@ const Index = () => {
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                placeholder="Enter your idea or product..."
+                placeholder={t.placeholder}
+                dir={isRTL ? "rtl" : "ltr"}
                 className="flex-1 bg-transparent px-4 py-4 text-base sm:text-lg placeholder:text-muted-foreground/70 focus:outline-none"
               />
               <button
@@ -159,14 +212,81 @@ const Index = () => {
                 disabled={loading || !idea.trim()}
                 className="group relative inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-primary text-background font-semibold text-sm sm:text-base transition-smooth hover:scale-[1.02] hover:animate-pulse-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap"
               >
-                {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />Generating...</>) :
-                  (<>Generate Viral Strategy<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>)}
+                {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />{t.ctaLoading}</>) :
+                  (<>{isRTL ? "←" : "→"} {t.cta}</>)}
               </button>
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground/70 mt-4">
-            Optimized for {mode === "views" ? "reach & retention" : mode === "money" ? "revenue & subscription" : "growth + revenue"}
+          {/* Video length picker */}
+          <div className="mt-8 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">{t.lengthLabel}</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {t.lengths.map((l) => {
+                const active = videoLength === l.id;
+                return (
+                  <button
+                    key={l.id}
+                    onClick={() => setVideoLength(l.id)}
+                    className={`relative rounded-xl border px-3 py-3 text-start transition-all ${
+                      active
+                        ? "border-primary bg-primary/10 shadow-[0_0_20px_hsl(270_95%_65%/0.25)]"
+                        : "border-border/60 bg-muted/30 hover:border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="font-display font-semibold text-sm">{l.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{l.desc}</div>
+                    {l.recommended && (
+                      <span className="absolute top-1.5 end-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-secondary/20 text-secondary">★</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mode picker */}
+          <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "360ms" }}>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">{t.modeLabel}</div>
+            <div className="grid grid-cols-3 gap-2">
+              {t.modes.map((m) => {
+                const active = mode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setMode(m.id)}
+                    className={`rounded-xl border px-3 py-3 transition-all ${
+                      active
+                        ? "border-secondary bg-secondary/10 shadow-[0_0_20px_hsl(160_84%_45%/0.25)]"
+                        : "border-border/60 bg-muted/30 hover:border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="font-display font-semibold text-sm">{m.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{m.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Quick examples */}
+          <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "420ms" }}>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">{t.examplesLabel}</div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {t.examples.map((ex) => (
+                <button
+                  key={ex}
+                  onClick={() => setIdea(ex)}
+                  className="px-3 py-1.5 rounded-full border border-border/60 bg-muted/40 text-xs text-foreground/80 hover:border-primary/60 hover:bg-primary/10 hover:text-foreground transition-all"
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground/70 mt-6">
+            {t.optimized(mode)}
           </p>
         </section>
 

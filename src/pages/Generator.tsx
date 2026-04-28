@@ -24,32 +24,40 @@ async function handleGenerate() {
 
     let imageUrl: string | null = null;
 
-    // === 1. העלאת התמונה ל-Supabase Storage ===
-    if (imageFile && imageData) {
-      const fileExt = imageFile.name.split('.').pop()?.toLowerCase() || 'png';
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+    // === 1. העלאת התמונה ל-Supabase Storage (אם קיימת) ===
+    if (imageData) {
+      // ניסיון להשתמש ב-imageFile אם קיים, אחרת imageData
+      const fileToUpload = imageFile || imageData;
 
-      console.log(`Uploading image: ${fileName}`);
+      if (fileToUpload) {
+        const fileExt = fileToUpload.name ? 
+          fileToUpload.name.split('.').pop()?.toLowerCase() || 'png' : 
+          'png';
 
-      const { error: uploadError } = await supabase.storage
-        .from('project-images')
-        .upload(fileName, imageFile, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-      if (uploadError) {
-        console.error("Image upload failed:", uploadError);
-        toast.error("Failed to upload image. Please try again.");
-        throw uploadError;
+        console.log(`Uploading image: ${fileName}`);
+
+        const { error: uploadError } = await supabase.storage
+          .from('project-images')
+          .upload(fileName, fileToUpload, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          toast.error("Failed to upload image. Please try again.");
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('project-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = urlData.publicUrl;
+        console.log("✅ Image uploaded successfully:", imageUrl);
       }
-
-      const { data: urlData } = supabase.storage
-        .from('project-images')
-        .getPublicUrl(fileName);
-
-      imageUrl = urlData.publicUrl;
-      console.log("✅ Image uploaded successfully:", imageUrl);
     }
 
     // === 2. הכנת ה-prompt ===
@@ -73,7 +81,7 @@ async function handleGenerate() {
         idea: enrichedIdea,
         mode: goal,
         videoLength: length,
-        imageUrl: imageUrl,     // ← שולח URL במקום base64
+        imageUrl: imageUrl,
       },
     });
 

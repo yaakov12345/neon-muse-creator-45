@@ -3,6 +3,7 @@ import {
   Flame, Film, DollarSign, Hash, Loader2, ArrowRight,
   Layers, CalendarDays, Lightbulb, Sparkles,
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
+  Megaphone, Magnet, Eye, Zap, Users,
 } from "lucide-react";
 import { TopBar, type Mode } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
@@ -32,6 +33,14 @@ interface Results {
   improvementTip: string;
   returnHook: string;
   seriesSystem: string;
+  acquisitionVideoConcept: string;
+  acquisitionHook: string;
+  problemToToolAngle: string;
+  acquisitionScript: string;
+  viralPostIdea: string;
+  acquisitionCtaLoop: string;
+  viralSeed: string;
+  acquisitionHashtags: string[];
   caption: string;
   hashtags: string[];
 }
@@ -209,6 +218,21 @@ const Index = () => {
                 <ResultCard icon={Lightbulb} title="Next Improvement" content={results.improvementTip} accent="green" delay={320} />
                 <ResultCard icon={Repeat} title="Return Hook" content={results.returnHook} accent="purple" delay={400} />
                 <ResultCard icon={Layers} title="Content Series System" content={results.seriesSystem} accent="green" delay={480} />
+              </div>
+            </div>
+
+            {/* TikTok User Acquisition Engine */}
+            <div>
+              <SectionTitle icon={Megaphone}>TikTok User Acquisition Engine</SectionTitle>
+              <div className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
+                <ResultCard icon={Film} title="Viral Video Concept (for creator)" content={results.acquisitionVideoConcept} accent="purple" delay={80} />
+                <ResultCard icon={Zap} title="Hook for Viral Growth" content={results.acquisitionHook} accent="green" delay={160} />
+                <ResultCard icon={Magnet} title="Problem → Tool Angle" content={results.problemToToolAngle} accent="purple" delay={240} />
+                <ResultCard icon={Film} title="Copy-This Video Script" content={results.acquisitionScript} accent="green" delay={320} />
+                <ResultCard icon={Users} title="Viral Post Idea (indirect promo)" content={results.viralPostIdea} accent="purple" delay={400} />
+                <ResultCard icon={ArrowRight} title="CTA Loop" content={results.acquisitionCtaLoop} accent="green" delay={480} />
+                <ResultCard icon={Eye} title="Viral Seed (curiosity trigger)" content={results.viralSeed} accent="purple" delay={560} />
+                <ResultCard icon={Hash} title="Acquisition Hashtags" content={results.acquisitionHashtags.join(" ")} accent="green" delay={640} />
               </div>
             </div>
 

@@ -120,7 +120,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={setLanguage} />
+      <TopBar mode={mode} onModeChange={setMode} language={language} onLanguageChange={changeLanguage} />
 
       <main className="flex-1 px-4 sm:px-6 pb-24">
         <section className="max-w-3xl mx-auto pt-12 sm:pt-20 text-center">

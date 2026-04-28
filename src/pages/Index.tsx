@@ -82,10 +82,62 @@ const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.Rea
 const Index = () => {
   const [mode, setMode] = useState<Mode>("both");
   const [videoLength, setVideoLength] = useState<VideoLength>("30s");
-  const { language, resolvedLanguage, changeLanguage } = useLanguageSystem();
+  const { language, resolvedLanguage, changeLanguage, isRTL } = useLanguageSystem();
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
+
+  const t = isRTL
+    ? {
+        badge: "מנוע ויראלי + צמיחת SaaS לטיקטוק",
+        title1: "הפוך כל רעיון",
+        title2: "לוויראלי",
+        subtitle: "Hooks חזקים • סקריפטים מנצחים • מונטיזציה • Retention\nמותאם אישית לאורך הסרטון שלך",
+        placeholder: "הזן רעיון או מוצר כאן... (למשל: שולחן עץ כפרי, מכונת קפה אוטומטית, אוזניות אלחוטיות)",
+        cta: "צור אסטרטגיה ויראלית",
+        ctaLoading: "יוצר...",
+        lengthLabel: "אורך סרטון",
+        modeLabel: "מצב",
+        examplesLabel: "דוגמאות מהירות",
+        examples: ["שולחן עץ כפרי", "מכונת קפה אוטומטית", "אוזניות אלחוטיות", "קרם פנים טבעי", "מנורת LED חכמה"],
+        lengths: [
+          { id: "10s" as VideoLength, label: "10 שניות", desc: "Ultra Short" },
+          { id: "15s" as VideoLength, label: "15-20 שניות", desc: "Short (מומלץ)", recommended: true },
+          { id: "30s" as VideoLength, label: "30-45 שניות", desc: "Medium" },
+          { id: "60s" as VideoLength, label: "60 שניות", desc: "Long" },
+        ],
+        modes: [
+          { id: "both" as Mode, label: "Both", desc: "צפיות + כסף" },
+          { id: "money" as Mode, label: "Money", desc: "הכנסה" },
+          { id: "views" as Mode, label: "Views", desc: "צפיות" },
+        ],
+        optimized: (m: Mode) => `מותאם ל${m === "views" ? "טווח הגעה ושימור" : m === "money" ? "הכנסה ומנוי" : "צמיחה + הכנסה"}`,
+      }
+    : {
+        badge: "TikTok viral + SaaS growth engine",
+        title1: "Turn any idea into a",
+        title2: "viral growth system",
+        subtitle: "Strong hooks • Winning scripts • Monetization • Retention\nTailored to your video length",
+        placeholder: "Enter an idea or product here... (e.g. rustic wood table, automatic coffee machine, wireless earbuds)",
+        cta: "Generate Viral Strategy",
+        ctaLoading: "Generating...",
+        lengthLabel: "Video length",
+        modeLabel: "Mode",
+        examplesLabel: "Quick examples",
+        examples: ["Rustic wood table", "Automatic coffee machine", "Wireless earbuds", "Natural face cream", "Smart LED lamp"],
+        lengths: [
+          { id: "10s" as VideoLength, label: "10s", desc: "Ultra Short" },
+          { id: "15s" as VideoLength, label: "15-20s", desc: "Short (recommended)", recommended: true },
+          { id: "30s" as VideoLength, label: "30-45s", desc: "Medium" },
+          { id: "60s" as VideoLength, label: "60s", desc: "Long" },
+        ],
+        modes: [
+          { id: "both" as Mode, label: "Both", desc: "Views + Money" },
+          { id: "money" as Mode, label: "Money", desc: "Revenue" },
+          { id: "views" as Mode, label: "Views", desc: "Reach" },
+        ],
+        optimized: (m: Mode) => `Optimized for ${m === "views" ? "reach & retention" : m === "money" ? "revenue & subscription" : "growth + revenue"}`,
+      };
 
   const handleGenerate = async () => {
     if (!idea.trim() || loading) return;

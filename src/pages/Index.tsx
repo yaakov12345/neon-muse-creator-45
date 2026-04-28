@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Flame, Film, DollarSign, Hash, Loader2, ArrowRight,
   Layers, CalendarDays, Lightbulb, Sparkles,
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
-  Megaphone, Magnet, Eye, Zap, Users,
+  Megaphone, Magnet, Eye, Zap, Users, ImagePlus, X,
 } from "lucide-react";
 import { TopBar, type Mode, type VideoLength } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
@@ -86,6 +86,27 @@ const Index = () => {
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [imageName, setImageName] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImagePick = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(isRTL ? "יש לבחור קובץ תמונה" : "Please select an image file");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error(isRTL ? "התמונה גדולה מ-8MB" : "Image larger than 8MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageData(reader.result as string);
+      setImageName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const t = isRTL
     ? {
@@ -112,6 +133,11 @@ const Index = () => {
           { id: "views" as Mode, label: "Views", desc: "צפיות" },
         ],
         optimized: (m: Mode) => `מותאם ל${m === "views" ? "טווח הגעה ושימור" : m === "money" ? "הכנסה ומנוי" : "צמיחה + הכנסה"}`,
+        imageTitle: "העלה תמונה של המוצר או צלם עכשיו (אופציונלי)",
+        imageDesc: "האפליקציה תנתח את התמונה (צבעים, סגנון, פרטים) ותיצור אסטרטגיה חכמה על בסיסה.",
+        imagePick: "בחר תמונה",
+        imageReplace: "החלף תמונה",
+        imageRemove: "הסר",
       }
     : {
         badge: "TikTok viral + SaaS growth engine",
@@ -137,16 +163,27 @@ const Index = () => {
           { id: "views" as Mode, label: "Views", desc: "Reach" },
         ],
         optimized: (m: Mode) => `Optimized for ${m === "views" ? "reach & retention" : m === "money" ? "revenue & subscription" : "growth + revenue"}`,
+        imageTitle: "Upload a product photo or take one now (optional)",
+        imageDesc: "We'll analyze the image (colors, style, details) and craft a smarter strategy from it.",
+        imagePick: "Pick image",
+        imageReplace: "Replace image",
+        imageRemove: "Remove",
       };
 
   const handleGenerate = async () => {
-    if (!idea.trim() || loading) return;
+    if ((!idea.trim() && !imageData) || loading) return;
     setLoading(true);
     setResults(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase(), videoLength },
+        body: {
+          idea: idea.trim() || (isRTL ? "(נשלחה תמונה בלבד — נתח את המוצר מהתמונה)" : "(Image only — analyze the product from the image)"),
+          mode,
+          language: resolvedLanguage.toUpperCase(),
+          videoLength,
+          image: imageData ?? undefined,
+        },
       });
 
       if (error) {
@@ -209,13 +246,63 @@ const Index = () => {
               />
               <button
                 onClick={handleGenerate}
-                disabled={loading || !idea.trim()}
+                disabled={loading || (!idea.trim() && !imageData)}
                 className="group relative inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-primary text-background font-semibold text-sm sm:text-base transition-smooth hover:scale-[1.02] hover:animate-pulse-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap"
               >
                 {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />{t.ctaLoading}</>) :
                   (<>{isRTL ? "←" : "→"} {t.cta}</>)}
               </button>
             </div>
+          </div>
+
+          {/* Image upload */}
+          <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "270ms" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleImagePick(e.target.files?.[0] ?? null)}
+            />
+            {!imageData ? (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-2xl border border-dashed border-border/70 bg-muted/20 hover:bg-muted/40 hover:border-primary/60 transition-all px-4 py-5 flex items-center gap-4 text-start"
+              >
+                <div className="h-11 w-11 shrink-0 rounded-xl bg-gradient-primary/20 flex items-center justify-center">
+                  <ImagePlus className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-semibold text-sm">{t.imageTitle}</div>
+                  <div className="text-[12px] text-muted-foreground mt-0.5 leading-snug">{t.imageDesc}</div>
+                </div>
+                <div className="ms-auto hidden sm:inline-flex px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-medium">
+                  {t.imagePick}
+                </div>
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 flex items-center gap-3">
+                <img src={imageData} alt={imageName} className="h-16 w-16 rounded-xl object-cover border border-border/50" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{imageName}</div>
+                  <div className="text-[11px] text-muted-foreground">{t.imageDesc}</div>
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-full bg-muted/60 hover:bg-muted text-xs font-medium"
+                >
+                  {t.imageReplace}
+                </button>
+                <button
+                  onClick={() => { setImageData(null); setImageName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-muted/60 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                  aria-label={t.imageRemove}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Video length picker */}

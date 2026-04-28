@@ -9,9 +9,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { idea, mode = "both", language = "AUTO", videoLength = "30s" } = await req.json();
-    if (!idea || typeof idea !== "string" || !idea.trim()) {
-      return new Response(JSON.stringify({ error: "Missing 'idea'" }), {
+    const { idea, mode = "both", language = "AUTO", videoLength = "30s", image } = await req.json();
+    if ((!idea || typeof idea !== "string" || !idea.trim()) && !image) {
+      return new Response(JSON.stringify({ error: "Missing 'idea' or 'image'" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -70,10 +70,18 @@ REQUIREMENTS:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Product / idea: ${idea}\nVideo length: ${videoLength}\nMode: ${mode}\n\nGenerate the full Viralyx strategy.` },
+          {
+            role: "user",
+            content: image
+              ? [
+                  { type: "text", text: `Product / idea: ${idea || "(image only — infer the product from the photo)"}\nVideo length: ${videoLength}\nMode: ${mode}\n\nThe user uploaded a product image. Analyze its colors, style, materials, mood and visual details, then weave those specifics into the hooks, script visuals, retention plan and monetization angles. Generate the full Viralyx strategy.` },
+                  { type: "image_url", image_url: { url: image } },
+                ]
+              : `Product / idea: ${idea}\nVideo length: ${videoLength}\nMode: ${mode}\n\nGenerate the full Viralyx strategy.`,
+          },
         ],
         tools: [
           {

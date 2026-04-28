@@ -3,11 +3,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export type Mode = "views" | "money" | "both";
 
+export type VideoLength = "10s" | "15s" | "20s" | "30s" | "45s" | "60s";
+
 interface TopBarProps {
   mode: Mode;
   onModeChange: (m: Mode) => void;
   language: string;
   onLanguageChange: (l: string) => void;
+  videoLength: VideoLength;
+  onVideoLengthChange: (v: VideoLength) => void;
 }
 
 const modes: { id: Mode; label: string }[] = [
@@ -16,7 +20,7 @@ const modes: { id: Mode; label: string }[] = [
   { id: "both", label: "Both" },
 ];
 
-export const TopBar = ({ mode, onModeChange, language, onLanguageChange }: TopBarProps) => {
+export const TopBar = ({ mode, onModeChange, language, onLanguageChange, videoLength, onVideoLengthChange }: TopBarProps) => {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/60 border-b border-border/50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
@@ -46,6 +50,18 @@ export const TopBar = ({ mode, onModeChange, language, onLanguageChange }: TopBa
             </button>
           ))}
         </div>
+
+        {/* Video length */}
+        <Select value={videoLength} onValueChange={(v) => onVideoLengthChange(v as VideoLength)}>
+          <SelectTrigger className="w-[72px] sm:w-[88px] h-9 rounded-full bg-muted/60 border-border/50 text-xs sm:text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border/50">
+            {(["10s","15s","20s","30s","45s","60s"] as VideoLength[]).map((v) => (
+              <SelectItem key={v} value={v}>⏱ {v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Language */}
         <Select value={language} onValueChange={onLanguageChange}>

@@ -133,6 +133,11 @@ const Index = () => {
           { id: "views" as Mode, label: "Views", desc: "צפיות" },
         ],
         optimized: (m: Mode) => `מותאם ל${m === "views" ? "טווח הגעה ושימור" : m === "money" ? "הכנסה ומנוי" : "צמיחה + הכנסה"}`,
+        imageTitle: "העלה תמונה של המוצר או צלם עכשיו (אופציונלי)",
+        imageDesc: "האפליקציה תנתח את התמונה (צבעים, סגנון, פרטים) ותיצור אסטרטגיה חכמה על בסיסה.",
+        imagePick: "בחר תמונה",
+        imageReplace: "החלף תמונה",
+        imageRemove: "הסר",
       }
     : {
         badge: "TikTok viral + SaaS growth engine",
@@ -158,16 +163,27 @@ const Index = () => {
           { id: "views" as Mode, label: "Views", desc: "Reach" },
         ],
         optimized: (m: Mode) => `Optimized for ${m === "views" ? "reach & retention" : m === "money" ? "revenue & subscription" : "growth + revenue"}`,
+        imageTitle: "Upload a product photo or take one now (optional)",
+        imageDesc: "We'll analyze the image (colors, style, details) and craft a smarter strategy from it.",
+        imagePick: "Pick image",
+        imageReplace: "Replace image",
+        imageRemove: "Remove",
       };
 
   const handleGenerate = async () => {
-    if (!idea.trim() || loading) return;
+    if ((!idea.trim() && !imageData) || loading) return;
     setLoading(true);
     setResults(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
-        body: { idea: idea.trim(), mode, language: resolvedLanguage.toUpperCase(), videoLength },
+        body: {
+          idea: idea.trim() || (isRTL ? "(נשלחה תמונה בלבד — נתח את המוצר מהתמונה)" : "(Image only — analyze the product from the image)"),
+          mode,
+          language: resolvedLanguage.toUpperCase(),
+          videoLength,
+          image: imageData ?? undefined,
+        },
       });
 
       if (error) {

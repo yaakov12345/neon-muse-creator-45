@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Flame, Film, DollarSign, Hash, Loader2, ArrowRight,
   Layers, CalendarDays, Lightbulb, Sparkles,
   MessageCircle, Repeat, Rocket, Crown, Tag, Target, Flame as FlameIcon, TrendingUp,
-  Megaphone, Magnet, Eye, Zap, Users,
+  Megaphone, Magnet, Eye, Zap, Users, ImagePlus, X,
 } from "lucide-react";
 import { TopBar, type Mode, type VideoLength } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";

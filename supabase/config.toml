@@ -1,1 +1,4 @@
 project_id = "uukthvoicgtghowlzfoe"
+
+[functions.generate-strategy]
+verify_jwt = false

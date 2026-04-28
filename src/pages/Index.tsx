@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Flame, Film, DollarSign, Hash, Loader2, ArrowRight } from "lucide-react";
 import { TopBar, type Mode } from "@/components/TopBar";
 import { ResultCard } from "@/components/ResultCard";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Results {
   hook: string;
@@ -17,21 +19,40 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
 
-  const handleGenerate = () => {
-    if (!idea.trim()) return;
+  const handleGenerate = async () => {
+    if (!idea.trim() || loading) return;
     setLoading(true);
     setResults(null);
 
-    setTimeout(() => {
-      const topic = idea.trim();
-      setResults({
-        hook: `"I tried ${topic} for 30 days — here's what nobody tells you."\n\nOpen with a fast-cut visual + a bold on-screen text in the first 1.2 seconds. Pattern interrupt > polish.`,
-        script: `0–3s: Bold claim about ${topic}.\n3–10s: Show the problem (B-roll, close-up).\n10–25s: Reveal your method in 3 quick steps.\n25–35s: Proof — numbers, before/after.\n35–45s: CTA — "Comment WANT for the full guide."`,
-        monetization: `• Lead magnet: free PDF on "${topic}" → email list\n• Affiliate: 2 tools you used (recurring %)\n• Digital product: $27 mini-course\n• Brand deals once you hit 10k targeted views`,
-        caption: `Stop scrolling if ${topic} matters to you 👇\nThe 3 things I wish I knew sooner — saved.\n\n#${topic.replace(/\s+/g, "")} #creatoreconomy #viralgrowth #contentstrategy #buildinpublic`,
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-strategy", {
+        body: { idea: idea.trim(), mode, language },
       });
+
+      if (error) {
+        const status = (error as any).context?.status;
+        if (status === 429) {
+          toast.error("Rate limit exceeded. Try again in a moment.");
+        } else if (status === 402) {
+          toast.error("AI credits exhausted. Add funds to continue.");
+        } else {
+          toast.error(error.message || "Failed to generate strategy.");
+        }
+        return;
+      }
+
+      if (!data || data.error) {
+        toast.error(data?.error || "Something went wrong.");
+        return;
+      }
+
+      setResults(data as Results);
+    } catch (e) {
+      console.error(e);
+      toast.error("Network error. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1100);
+    }
   };
 
   const showViews = mode === "views" || mode === "both";

@@ -53,7 +53,10 @@ export const TopBar = ({ mode, onModeChange, language, onLanguageChange }: TopBa
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border/50">
+            <SelectItem value="AUTO">🌐 Auto</SelectItem>
             <SelectItem value="EN">🇬🇧 EN</SelectItem>
+            <SelectItem value="HE">🇮🇱 HE</SelectItem>
+            <SelectItem value="AR">🇸🇦 AR</SelectItem>
             <SelectItem value="ES">🇪🇸 ES</SelectItem>
             <SelectItem value="FR">🇫🇷 FR</SelectItem>
             <SelectItem value="DE">🇩🇪 DE</SelectItem>

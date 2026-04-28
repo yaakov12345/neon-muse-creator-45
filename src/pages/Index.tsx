@@ -86,6 +86,27 @@ const Index = () => {
   const [idea, setIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [imageName, setImageName] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImagePick = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error(isRTL ? "יש לבחור קובץ תמונה" : "Please select an image file");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error(isRTL ? "התמונה גדולה מ-8MB" : "Image larger than 8MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageData(reader.result as string);
+      setImageName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const t = isRTL
     ? {

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, Upload } from "lucide-react";
+import ImageAnalysisSection, { ImageAnalysisData } from "@/components/ImageAnalysisSection";
 
 const schema = z.object({
   idea: z.string().trim().min(3, "Idea must be at least 3 characters").max(2000),
@@ -38,7 +39,11 @@ export default function Generator() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageData, setImageData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<ImageAnalysisData | null>(null);
+  const [analysisImageUrl, setAnalysisImageUrl] = useState<string | null>(null);
+  const [analysisFilePath, setAnalysisFilePath] = useState<string | null>(null);
+  const [extraDetails, setExtraDetails] = useState("");
   function toggleTone(t: string) {
     setSelectedTones((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
@@ -46,10 +51,76 @@ export default function Generator() {
   function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image too large (max 8MB)");
+      return;
+    }
     setImageFile(file);
+    setAnalysis(null);
+    setAnalysisImageUrl(null);
+    setAnalysisFilePath(null);
     const reader = new FileReader();
-    reader.onload = () => setImageData(reader.result as string);
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setImageData(dataUrl);
+      // Kick off analysis automatically
+      void analyzeImage(file);
+    };
     reader.readAsDataURL(file);
+  }
+
+  async function uploadAndSign(file: File): Promise<{ filePath: string; signedUrl: string } | null> {
+    if (!user) return null;
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const filePath = `${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("project-images")
+      .upload(filePath, file, { cacheControl: "3600", upsert: false });
+    if (upErr) {
+      console.error(upErr);
+      return null;
+    }
+    const { data: signed } = await supabase.storage
+      .from("project-images")
+      .createSignedUrl(filePath, 3600);
+    if (!signed?.signedUrl) return null;
+    return { filePath, signedUrl: signed.signedUrl };
+  }
+
+  async function analyzeImage(file: File) {
+    if (!user) {
+      toast.error("You must be logged in");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      let signedUrl = analysisImageUrl;
+      let filePath = analysisFilePath;
+      if (!signedUrl || !filePath) {
+        const uploaded = await uploadAndSign(file);
+        if (!uploaded) throw new Error("Image upload failed");
+        signedUrl = uploaded.signedUrl;
+        filePath = uploaded.filePath;
+        setAnalysisImageUrl(signedUrl);
+        setAnalysisFilePath(filePath);
+      }
+      const { data, error } = await supabase.functions.invoke("analyze-image", {
+        body: { imageUrl: signedUrl },
+      });
+      if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Analysis failed");
+      setAnalysis(data as ImageAnalysisData);
+      toast.success("✨ Image analyzed");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  async function handleRegenerateAnalysis() {
+    if (imageFile) await analyzeImage(imageFile);
   }
 
   async function handleGenerate() {
@@ -66,30 +137,28 @@ export default function Generator() {
 
     setLoading(true);
     try {
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = analysisImageUrl;
 
-      if (imageData && imageFile) {
-        if (imageFile.size > 8 * 1024 * 1024) {
-          toast.error("Image too large (max 8MB)");
-          setLoading(false);
-          return;
-        }
-        const ext = imageFile.name.split(".").pop()?.toLowerCase() || "png";
-        // Store under per-user folder so storage RLS allows access
-        const filePath = `${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("project-images")
-          .upload(filePath, imageFile, { cacheControl: "3600", upsert: false });
-        if (upErr) {
-          console.error(upErr);
-        } else {
-          // Bucket is private — issue a short-lived signed URL for the AI to read
-          const { data: signed } = await supabase.storage
-            .from("project-images")
-            .createSignedUrl(filePath, 3600);
-          imageUrl = signed?.signedUrl || null;
+      // Upload now if user skipped analysis (no image uploaded yet)
+      if (!imageUrl && imageData && imageFile) {
+        const uploaded = await uploadAndSign(imageFile);
+        if (uploaded) {
+          imageUrl = uploaded.signedUrl;
+          setAnalysisImageUrl(uploaded.signedUrl);
+          setAnalysisFilePath(uploaded.filePath);
         }
       }
+
+      const analysisNotes = analysis
+        ? [
+            `Detected product: ${analysis.detectedProduct}`,
+            `Vibe: ${analysis.vibe}`,
+            `Style: ${analysis.style}`,
+            `Dominant colors: ${analysis.dominantColors.join(", ")}`,
+            `Key visual elements: ${analysis.keyElements.join("; ")}`,
+            `AI-suggested hooks: ${analysis.suggestedHooks.join(" | ")}`,
+          ].join("\n")
+        : "";
 
       const advancedNotes = [
         extremelyViral && "Push for maximum virality with bold pattern interrupts.",
@@ -99,11 +168,12 @@ export default function Generator() {
         selectedTones.length && `Tone: ${selectedTones.join(", ")}`,
         audience && `Audience: ${audience}`,
         niche && `Niche: ${niche}`,
+        extraDetails && `Extra product details: ${extraDetails}`,
       ]
         .filter(Boolean)
         .join(" | ");
 
-      const enrichedIdea = `${idea}\n\nAdvanced instructions: ${advancedNotes}`;
+      const enrichedIdea = `${idea}${analysisNotes ? `\n\nVisual analysis:\n${analysisNotes}` : ""}\n\nAdvanced instructions: ${advancedNotes}`;
 
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
         body: { idea: enrichedIdea, mode: goal, videoLength: length, imageUrl },
@@ -223,25 +293,47 @@ export default function Generator() {
           <Label>Reference Image (optional)</Label>
           <label className="flex items-center gap-2 cursor-pointer border border-dashed border-primary/40 rounded-lg p-4 hover:bg-primary/5 transition">
             <Upload className="w-4 h-4" />
-            <span className="text-sm">{imageFile?.name || "Upload product image"}</span>
+            <span className="text-sm">{imageFile?.name || "Upload product image (auto-analyzed)"}</span>
             <input type="file" accept="image/*" className="hidden" onChange={onImageChange} />
           </label>
-          {imageData && <img src={imageData} alt="preview" className="mt-2 max-h-40 rounded-lg" />}
+          {analyzing && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Analyzing image with AI...
+            </div>
+          )}
+          {imageData && !analysis && !analyzing && (
+            <img src={imageData} alt="preview" className="mt-2 max-h-40 rounded-lg" />
+          )}
         </div>
 
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !idea.trim()}
-          size="lg"
-          className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
-        >
-          {loading ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-          ) : (
-            <><Sparkles className="w-4 h-4 mr-2" /> Generate Viral Strategy</>
-          )}
-        </Button>
+        {!analysis && (
+          <Button
+            onClick={handleGenerate}
+            disabled={loading || analyzing || !idea.trim()}
+            size="lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
+          >
+            {loading ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+            ) : (
+              <><Sparkles className="w-4 h-4 mr-2" /> Generate Viral Strategy</>
+            )}
+          </Button>
+        )}
       </Card>
+
+      {analysis && (
+        <ImageAnalysisSection
+          data={analysis}
+          imageDataUrl={imageData}
+          extraDetails={extraDetails}
+          onExtraDetailsChange={setExtraDetails}
+          onRegenerate={handleRegenerateAnalysis}
+          onGenerateStrategy={handleGenerate}
+          regenerating={analyzing}
+          generating={loading}
+        />
+      )}
     </div>
   );
 }

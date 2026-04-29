@@ -39,7 +39,11 @@ export default function Generator() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageData, setImageData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<ImageAnalysisData | null>(null);
+  const [analysisImageUrl, setAnalysisImageUrl] = useState<string | null>(null);
+  const [analysisFilePath, setAnalysisFilePath] = useState<string | null>(null);
+  const [extraDetails, setExtraDetails] = useState("");
   function toggleTone(t: string) {
     setSelectedTones((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }

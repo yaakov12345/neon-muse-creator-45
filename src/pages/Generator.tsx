@@ -293,25 +293,47 @@ export default function Generator() {
           <Label>Reference Image (optional)</Label>
           <label className="flex items-center gap-2 cursor-pointer border border-dashed border-primary/40 rounded-lg p-4 hover:bg-primary/5 transition">
             <Upload className="w-4 h-4" />
-            <span className="text-sm">{imageFile?.name || "Upload product image"}</span>
+            <span className="text-sm">{imageFile?.name || "Upload product image (auto-analyzed)"}</span>
             <input type="file" accept="image/*" className="hidden" onChange={onImageChange} />
           </label>
-          {imageData && <img src={imageData} alt="preview" className="mt-2 max-h-40 rounded-lg" />}
+          {analyzing && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Analyzing image with AI...
+            </div>
+          )}
+          {imageData && !analysis && !analyzing && (
+            <img src={imageData} alt="preview" className="mt-2 max-h-40 rounded-lg" />
+          )}
         </div>
 
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !idea.trim()}
-          size="lg"
-          className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
-        >
-          {loading ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-          ) : (
-            <><Sparkles className="w-4 h-4 mr-2" /> Generate Viral Strategy</>
-          )}
-        </Button>
+        {!analysis && (
+          <Button
+            onClick={handleGenerate}
+            disabled={loading || analyzing || !idea.trim()}
+            size="lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
+          >
+            {loading ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+            ) : (
+              <><Sparkles className="w-4 h-4 mr-2" /> Generate Viral Strategy</>
+            )}
+          </Button>
+        )}
       </Card>
+
+      {analysis && (
+        <ImageAnalysisSection
+          data={analysis}
+          imageDataUrl={imageData}
+          extraDetails={extraDetails}
+          onExtraDetailsChange={setExtraDetails}
+          onRegenerate={handleRegenerateAnalysis}
+          onGenerateStrategy={handleGenerate}
+          regenerating={analyzing}
+          generating={loading}
+        />
+      )}
     </div>
   );
 }

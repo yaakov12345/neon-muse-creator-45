@@ -75,15 +75,19 @@ export default function Generator() {
           return;
         }
         const ext = imageFile.name.split(".").pop()?.toLowerCase() || "png";
-        const fileName = `${user.id}-${Date.now()}.${ext}`;
+        // Store under per-user folder so storage RLS allows access
+        const filePath = `${user.id}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("project-images")
-          .upload(fileName, imageFile, { cacheControl: "3600", upsert: false });
+          .upload(filePath, imageFile, { cacheControl: "3600", upsert: false });
         if (upErr) {
           console.error(upErr);
         } else {
-          const { data: urlData } = supabase.storage.from("project-images").getPublicUrl(fileName);
-          imageUrl = urlData?.publicUrl || null;
+          // Bucket is private — issue a short-lived signed URL for the AI to read
+          const { data: signed } = await supabase.storage
+            .from("project-images")
+            .createSignedUrl(filePath, 3600);
+          imageUrl = signed?.signedUrl || null;
         }
       }
 

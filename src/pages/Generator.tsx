@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, Upload } from "lucide-react";
+import ImageAnalysisSection, { ImageAnalysisData } from "@/components/ImageAnalysisSection";
 
 const schema = z.object({
   idea: z.string().trim().min(3, "Idea must be at least 3 characters").max(2000),

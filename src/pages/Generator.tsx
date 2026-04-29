@@ -137,30 +137,28 @@ export default function Generator() {
 
     setLoading(true);
     try {
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = analysisImageUrl;
 
-      if (imageData && imageFile) {
-        if (imageFile.size > 8 * 1024 * 1024) {
-          toast.error("Image too large (max 8MB)");
-          setLoading(false);
-          return;
-        }
-        const ext = imageFile.name.split(".").pop()?.toLowerCase() || "png";
-        // Store under per-user folder so storage RLS allows access
-        const filePath = `${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("project-images")
-          .upload(filePath, imageFile, { cacheControl: "3600", upsert: false });
-        if (upErr) {
-          console.error(upErr);
-        } else {
-          // Bucket is private — issue a short-lived signed URL for the AI to read
-          const { data: signed } = await supabase.storage
-            .from("project-images")
-            .createSignedUrl(filePath, 3600);
-          imageUrl = signed?.signedUrl || null;
+      // Upload now if user skipped analysis (no image uploaded yet)
+      if (!imageUrl && imageData && imageFile) {
+        const uploaded = await uploadAndSign(imageFile);
+        if (uploaded) {
+          imageUrl = uploaded.signedUrl;
+          setAnalysisImageUrl(uploaded.signedUrl);
+          setAnalysisFilePath(uploaded.filePath);
         }
       }
+
+      const analysisNotes = analysis
+        ? [
+            `Detected product: ${analysis.detectedProduct}`,
+            `Vibe: ${analysis.vibe}`,
+            `Style: ${analysis.style}`,
+            `Dominant colors: ${analysis.dominantColors.join(", ")}`,
+            `Key visual elements: ${analysis.keyElements.join("; ")}`,
+            `AI-suggested hooks: ${analysis.suggestedHooks.join(" | ")}`,
+          ].join("\n")
+        : "";
 
       const advancedNotes = [
         extremelyViral && "Push for maximum virality with bold pattern interrupts.",
@@ -170,11 +168,12 @@ export default function Generator() {
         selectedTones.length && `Tone: ${selectedTones.join(", ")}`,
         audience && `Audience: ${audience}`,
         niche && `Niche: ${niche}`,
+        extraDetails && `Extra product details: ${extraDetails}`,
       ]
         .filter(Boolean)
         .join(" | ");
 
-      const enrichedIdea = `${idea}\n\nAdvanced instructions: ${advancedNotes}`;
+      const enrichedIdea = `${idea}${analysisNotes ? `\n\nVisual analysis:\n${analysisNotes}` : ""}\n\nAdvanced instructions: ${advancedNotes}`;
 
       const { data, error } = await supabase.functions.invoke("generate-strategy", {
         body: { idea: enrichedIdea, mode: goal, videoLength: length, imageUrl },

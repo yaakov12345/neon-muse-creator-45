@@ -22,38 +22,45 @@ async function handleGenerate() {
   try {
     console.log("🚀 Starting generation...");
 
-    let imageUrl: string | null = null;
+    let imageUrl = null;
 
-    // === העלאת תמונה ===
+    // =========================
+    // IMAGE UPLOAD
+    // =========================
     if (imageData) {
-      let fileToUpload: File | Blob | null = null;
+      let fileToUpload = null;
 
       if (imageFile instanceof File) {
         fileToUpload = imageFile;
       } else if (imageData instanceof File || imageData instanceof Blob) {
         fileToUpload = imageData;
       } else if (typeof imageData === "string" && imageData.startsWith("data:image")) {
-        // אם זה base64 – המר ל-Blob
         const base64Response = await fetch(imageData);
         fileToUpload = await base64Response.blob();
       }
 
       if (fileToUpload) {
-        // הגבלת גודל (מקסימום ~8MB)
+        // גודל מקסימלי 8MB
         if (fileToUpload.size > 8 * 1024 * 1024) {
           toast.error("Image is too large. Please use image under 8MB.");
           throw new Error("Image too large");
         }
 
-        const fileExt = fileToUpload.name?.split('.').pop()?.toLowerCase() || 'png';
+        const fileExt =
+          fileToUpload instanceof File && fileToUpload.name
+            ? fileToUpload.name.split(".").pop()?.toLowerCase()
+            : "png";
+
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-        console.log(`Uploading image: ${fileName} (${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB)`);
+        console.log(
+          `Uploading image: ${fileName} (${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB)`
+        );
 
         const { error: uploadError } = await supabase.storage
-          .from('project-images')
+          .from("project-images")
           .upload(fileName, fileToUpload, {
-            cacheControl: '3600',
+            cacheControl: "3600",
             upsert: false,
           });
 
@@ -64,28 +71,35 @@ async function handleGenerate() {
         }
 
         const { data: urlData } = supabase.storage
-          .from('project-images')
+          .from("project-images")
           .getPublicUrl(fileName);
 
-        imageUrl = urlData.publicUrl;
+        imageUrl = urlData?.publicUrl || null;
+
         console.log("✅ Image uploaded:", imageUrl);
       }
     }
 
-    // === הכנת prompt ===
+    // =========================
+    // PROMPT BUILD
+    // =========================
     const advancedNotes = [
       extremelyViral && "Push for maximum virality with bold pattern interrupts.",
       strongCTA && "Include a strong, direct sales CTA.",
       retention && "Optimize structure heavily for retention curve.",
       videoName && `Reference video: ${videoName}`,
-      selectedTones.length && `Tone: ${selectedTones.join(", ")}`,
+      selectedTones?.length && `Tone: ${selectedTones.join(", ")}`,
       audience && `Audience: ${audience}`,
       niche && `Niche: ${niche}`,
-    ].filter(Boolean).join(" | ");
+    ]
+      .filter(Boolean)
+      .join(" | ");
 
     const enrichedIdea = `${idea}\n\nAdvanced instructions: ${advancedNotes}`;
 
-    // === קריאה ל-Edge Function ===
+    // =========================
+    // EDGE FUNCTION CALL
+    // =========================
     const { data, error } = await supabase.functions.invoke("generate", {
       body: {
         idea: enrichedIdea,
@@ -95,14 +109,25 @@ async function handleGenerate() {
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Edge function error:", error);
+      throw error;
+    }
+
     if (!data) throw new Error("No data returned from AI");
 
+    // =========================
+    // SCORE CALC
+    // =========================
     const viralScore = Math.round(
-      ((data.viralityScore ?? 70) + (data.executionScore ?? 70) + (data.moneyScore ?? 70)) / 3
+      ((data?.viralityScore ?? 70) +
+        (data?.executionScore ?? 70) +
+        (data?.moneyScore ?? 70)) / 3
     ) || 75;
 
-    // שמירה ב-DB
+    // =========================
+    // SAVE TO DB
+    // =========================
     const { data: saved, error: saveErr } = await supabase
       .from("projects")
       .insert({
@@ -126,9 +151,9 @@ async function handleGenerate() {
     toast.success("🔥 Strategy generated successfully!");
     navigate(`/projects/${saved.id}`);
 
-  } catch (err: any) {
+  } catch (err) {
     console.error("❌ handleGenerate failed:", err);
-    toast.error(err.message || "Generation failed. Please try again.");
+    toast.error(err?.message || "Generation failed. Please try again.");
   } finally {
     setLoading(false);
   }

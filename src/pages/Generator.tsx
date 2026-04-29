@@ -51,10 +51,76 @@ export default function Generator() {
   function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image too large (max 8MB)");
+      return;
+    }
     setImageFile(file);
+    setAnalysis(null);
+    setAnalysisImageUrl(null);
+    setAnalysisFilePath(null);
     const reader = new FileReader();
-    reader.onload = () => setImageData(reader.result as string);
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setImageData(dataUrl);
+      // Kick off analysis automatically
+      void analyzeImage(file);
+    };
     reader.readAsDataURL(file);
+  }
+
+  async function uploadAndSign(file: File): Promise<{ filePath: string; signedUrl: string } | null> {
+    if (!user) return null;
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const filePath = `${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("project-images")
+      .upload(filePath, file, { cacheControl: "3600", upsert: false });
+    if (upErr) {
+      console.error(upErr);
+      return null;
+    }
+    const { data: signed } = await supabase.storage
+      .from("project-images")
+      .createSignedUrl(filePath, 3600);
+    if (!signed?.signedUrl) return null;
+    return { filePath, signedUrl: signed.signedUrl };
+  }
+
+  async function analyzeImage(file: File) {
+    if (!user) {
+      toast.error("You must be logged in");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      let signedUrl = analysisImageUrl;
+      let filePath = analysisFilePath;
+      if (!signedUrl || !filePath) {
+        const uploaded = await uploadAndSign(file);
+        if (!uploaded) throw new Error("Image upload failed");
+        signedUrl = uploaded.signedUrl;
+        filePath = uploaded.filePath;
+        setAnalysisImageUrl(signedUrl);
+        setAnalysisFilePath(filePath);
+      }
+      const { data, error } = await supabase.functions.invoke("analyze-image", {
+        body: { imageUrl: signedUrl },
+      });
+      if (error) throw error;
+      if (!data || data.error) throw new Error(data?.error || "Analysis failed");
+      setAnalysis(data as ImageAnalysisData);
+      toast.success("✨ Image analyzed");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  async function handleRegenerateAnalysis() {
+    if (imageFile) await analyzeImage(imageFile);
   }
 
   async function handleGenerate() {

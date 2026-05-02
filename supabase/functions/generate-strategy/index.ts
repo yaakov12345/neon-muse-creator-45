@@ -107,7 +107,82 @@ Tone: professional, confident, warm, inspiring.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
-        tools: [ /* כאן נשאיר את ה-tools כפי שהיה - הם ארוכים, לא שיניתי אותם */ ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "viral_strategy",
+              description: "Return a complete viral short-form content strategy.",
+              parameters: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Catchy strategy title" },
+                  summary: { type: "string", description: "1-2 sentence overview" },
+                  hooks: {
+                    type: "array",
+                    description: "5 scroll-stopping hooks (first 3 seconds)",
+                    items: { type: "string" },
+                    minItems: 3,
+                    maxItems: 7,
+                  },
+                  script: {
+                    type: "array",
+                    description: "Time-stamped script sections",
+                    items: {
+                      type: "object",
+                      properties: {
+                        time: { type: "string", description: "e.g. 0-3s" },
+                        voiceover: { type: "string" },
+                        visual: { type: "string" },
+                        onScreenText: { type: "string" },
+                      },
+                      required: ["time", "voiceover", "visual"],
+                      additionalProperties: false,
+                    },
+                  },
+                  cta: { type: "string", description: "Strong call-to-action" },
+                  caption: { type: "string", description: "Post caption with line breaks" },
+                  hashtags: {
+                    type: "array",
+                    items: { type: "string" },
+                    minItems: 5,
+                    maxItems: 20,
+                  },
+                  retentionTactics: {
+                    type: "array",
+                    items: { type: "string" },
+                    minItems: 3,
+                  },
+                  monetization: {
+                    type: "array",
+                    description: "Concrete monetization plays",
+                    items: { type: "string" },
+                    minItems: 2,
+                  },
+                  postingStrategy: {
+                    type: "object",
+                    properties: {
+                      bestTimes: { type: "array", items: { type: "string" } },
+                      frequency: { type: "string" },
+                      platforms: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["bestTimes", "frequency", "platforms"],
+                    additionalProperties: false,
+                  },
+                  viralityScore: { type: "number", minimum: 0, maximum: 100 },
+                  executionScore: { type: "number", minimum: 0, maximum: 100 },
+                  moneyScore: { type: "number", minimum: 0, maximum: 100 },
+                },
+                required: [
+                  "title", "summary", "hooks", "script", "cta", "caption",
+                  "hashtags", "retentionTactics", "monetization", "postingStrategy",
+                  "viralityScore", "executionScore", "moneyScore",
+                ],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
         tool_choice: { type: "function", function: { name: "viral_strategy" } },
       }),
     });

@@ -128,6 +128,12 @@ export default function Generator() {
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message || "Validation failed");
       setStep(1);
+      // Scroll to top + focus idea field so user understands what to fix
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setTimeout(() => {
+        const el = document.querySelector<HTMLTextAreaElement>('textarea[placeholder^="Describe"]');
+        el?.focus();
+      }, 300);
       return;
     }
     if (!user) {

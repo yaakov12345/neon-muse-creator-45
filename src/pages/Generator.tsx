@@ -46,11 +46,14 @@ export default function Generator() {
   const [extraDetails, setExtraDetails] = useState("");
 
   useEffect(() => {
-    const pending = sessionStorage.getItem("pending_idea");
-    if (pending) {
-      setIdea(pending);
-      sessionStorage.removeItem("pending_idea");
-    }
+    const pendingIdea = sessionStorage.getItem("pending_idea");
+    const pendingAudience = sessionStorage.getItem("pending_audience");
+    const pendingNiche = sessionStorage.getItem("pending_niche");
+    const pendingTone = sessionStorage.getItem("pending_tone");
+    if (pendingIdea) { setIdea(pendingIdea); sessionStorage.removeItem("pending_idea"); }
+    if (pendingAudience) { setAudience(pendingAudience); sessionStorage.removeItem("pending_audience"); }
+    if (pendingNiche) { setNiche(pendingNiche); sessionStorage.removeItem("pending_niche"); }
+    if (pendingTone) { setSelectedTones([pendingTone]); sessionStorage.removeItem("pending_tone"); }
   }, []);
 
   function toggleTone(t: string) {

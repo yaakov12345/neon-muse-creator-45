@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -44,6 +44,15 @@ export default function Generator() {
   const [analysisImageUrl, setAnalysisImageUrl] = useState<string | null>(null);
   const [analysisFilePath, setAnalysisFilePath] = useState<string | null>(null);
   const [extraDetails, setExtraDetails] = useState("");
+
+  useEffect(() => {
+    const pending = sessionStorage.getItem("pending_idea");
+    if (pending) {
+      setIdea(pending);
+      sessionStorage.removeItem("pending_idea");
+    }
+  }, []);
+
   function toggleTone(t: string) {
     setSelectedTones((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
